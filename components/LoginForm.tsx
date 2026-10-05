@@ -27,7 +27,7 @@ export function LoginForm() {
     <main className="loginWrap">
       <form className="card loginCard glow" onSubmit={submit}>
         <div className="brand">
-          <div className="mark" aria-hidden="true">F</div>
+          <img className="mark" src="/fynq-logo.png" alt="" width={44} height={44} />
           <div className="brandText">
             <div className="brandName">FYNQ <span>Command Center</span></div>
             <div className="brandSub">Live company intelligence</div>

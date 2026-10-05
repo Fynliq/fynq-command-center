@@ -25,7 +25,7 @@ function NotConfigured({ missing }: { missing: string[] }) {
   return (
     <main className="loginWrap">
       <div className="card loginCard">
-        <div className="mark" aria-hidden="true">F</div>
+        <img className="mark" src="/fynq-logo.png" alt="" width={44} height={44} />
         <h1>FYNQ Command Center isn&rsquo;t configured yet</h1>
         <p className="sub">Add these environment variables in Vercel, then redeploy:</p>
         <ul className="sub">{missing.map((m) => <li key={m}>{m}</li>)}</ul>

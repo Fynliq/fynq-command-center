@@ -73,9 +73,8 @@ a { color: inherit; }
 .top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
 .brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
 .mark {
-  width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; flex: none;
-  background: linear-gradient(145deg, #d8ff6e, #8fd400); color: #061006; font-weight: 800; font-size: 20px; letter-spacing: -0.04em;
-  box-shadow: 0 0 0 1px rgba(198, 255, 61, 0.4), 0 8px 30px -6px var(--lime-glow);
+  width: 44px; height: 44px; flex: none; display: block; object-fit: contain;
+  filter: drop-shadow(0 6px 16px rgba(118, 196, 34, 0.35));
 }
 .brandText { min-width: 0; }
 .brandName { display: flex; align-items: baseline; gap: 10px; font-weight: 700; font-size: 20px; letter-spacing: -0.02em; line-height: 1.1; }
