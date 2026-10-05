@@ -70,6 +70,18 @@ export const METRICS = {
   checkoutCreated: { label: 'Checkout Created', definition: "monetization_events with event_type = 'checkout_created' (live, non-test)." },
   checkoutCompleted: { label: 'Checkout Completed', definition: "monetization_events with event_type = 'checkout_completed' (live, non-test)." },
   paymentConfirmed: { label: 'Payment Confirmed', definition: "monetization_events with event_type = 'payment_confirmed' (live, non-test), recorded only from a signature-verified Stripe webhook." },
+
+  // Traffic → Revenue (first touch; see lib/metrics/attribution.ts)
+  ttVisitors: { label: 'TikTok Visitors', definition: "Guest browsers whose first recorded visit came from TikTok (acquisition_attribution.channel = 'tiktok'): UTM source, TikTok ad click id, or a tiktok.com referrer." },
+  ttAccounts: { label: 'TikTok Registered Accounts', definition: 'Accounts whose first touch is TikTok: the earliest-seen browser they used came from TikTok, and the account was created after that visit.' },
+  ttUploaders: { label: 'TikTok Unique My Aid Uploaders', definition: 'Distinct people (account, else guest browser) with at least one upload_events row, whose first touch is TikTok.' },
+  ttUploadEvents: { label: 'TikTok My Aid Upload Events', definition: 'upload_events rows from people whose first touch is TikTok.' },
+  ttQuestionFlows: { label: 'TikTok Completed Question Flows', definition: "beta_questions with state = 'success' asked by people whose first touch is TikTok." },
+  ttPaywall: { label: 'TikTok Paywall Views', definition: "Distinct TikTok-first accounts with a live, non-test 'paywall_viewed' event." },
+  ttCheckout: { label: 'TikTok Checkout Starts', definition: 'Distinct TikTok-first accounts with a live, non-test checkout session (or checkout-started event).' },
+  ttPaid: { label: 'TikTok Paying Customers', definition: "Distinct TikTok-first accounts with a live, active, non-test entitlement, excluding EXCLUDED_BILLING_EMAILS." },
+  ttRevenue: { label: 'TikTok Revenue', definition: 'SUM(amount) of those entitlements, in US dollars.' },
+  ttAnalyses: { label: 'TikTok Post-Payment Completed Analyses', definition: "TikTok paying customers with an analysis-completed or full-analysis-viewed event at or after payment." },
 } as const satisfies Record<string, MetricDefinition>;
 
 export type MetricId = keyof typeof METRICS;
@@ -98,5 +110,5 @@ export const FUNNEL: { id: string; label: string; events: string[]; always?: boo
 export const SOURCE_NAMES = {
   trackedUsers: 'tracked users', accounts: 'accounts', accountEvents: 'login events', uploads: 'uploads',
   guestLinks: 'guest links', questions: 'questions', monetization: 'funnel events', checkouts: 'checkouts',
-  entitlements: 'payments', analyses: 'aid analyses', exclusions: 'excluded billing accounts',
+  entitlements: 'payments', analyses: 'aid analyses', exclusions: 'excluded billing accounts', attribution: 'traffic attribution',
 } as const;

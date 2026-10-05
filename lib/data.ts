@@ -10,7 +10,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { computeDashboard } from './metrics/compute';
 import type {
-  AccountEventRow, AccountRow, AnalysisRow, CheckoutRow, DashboardData, EntitlementRow, GuestLinkRow, MonetizationRow, QuestionRow, RawData, SourceKey, TrackedUserRow, UploadRow,
+  AccountEventRow, AccountRow, AnalysisRow, AttributionRow, CheckoutRow, DashboardData, EntitlementRow, GuestLinkRow, MonetizationRow, QuestionRow, RawData, SourceKey, TrackedUserRow, UploadRow,
 } from './metrics/types';
 import { serverEnv } from './env';
 
@@ -59,21 +59,34 @@ export async function loadRawData(): Promise<RawData> {
       return [];
     }
   };
-  const [trackedUsers, accounts, accountEvents, uploads, guestLinks, questions, monetization, checkouts, entitlements, analyses, excluded] = await Promise.all([
+  // Traffic attribution is optional until its migration is applied: a
+  // missing table means "not installed yet", not a failure.
+  let attributionInstalled = true;
+  const readAttribution = async (): Promise<AttributionRow[]> => {
+    try {
+      return await readAll<AttributionRow>('acquisition_attribution', 'guest_id,account_id,first_seen_at,attribution_type,channel,source,medium,campaign,content', 'first_seen_at');
+    } catch (error) {
+      if (error instanceof Error && /: (42P01|PGRST205|PGRST106)$/.test(error.message)) { attributionInstalled = false; return []; }
+      throw error;
+    }
+  };
+  const [trackedUsers, accounts, accountEvents, uploads, guestLinks, questions, monetization, checkouts, entitlements, analyses, excluded, attribution] = await Promise.all([
     safe<TrackedUserRow>('trackedUsers', () => readAll<TrackedUserRow>('anonymous_users', 'created_at,last_active_at')),
     safe<AccountRow>('accounts', () => readAll<AccountRow>('accounts', 'user_id,created_at,last_login_at,login_count')),
     safe<AccountEventRow>('accountEvents', () => readAll<AccountEventRow>('account_events', 'event_type,created_at')),
     safe<UploadRow>('uploads', () => readAll<UploadRow>('upload_events', 'id,created_at,account_id,guest_id,outcome,files,figures')),
     safe<GuestLinkRow>('guestLinks', () => readAll<GuestLinkRow>('account_guests', 'user_id,guest_id', 'linked_at')),
-    safe<QuestionRow>('questions', () => readAll<QuestionRow>('beta_questions', 'created_at,finished_at,state')),
+    safe<QuestionRow>('questions', () => readAll<QuestionRow>('beta_questions', 'created_at,finished_at,state,user_id')),
     safe<MonetizationRow>('monetization', () => readAll<MonetizationRow>('monetization_events', 'created_at,account_id,event_type,livemode,is_test_account')),
     safe<CheckoutRow>('checkouts', () => readAll<CheckoutRow>('billing_checkouts', 'account_id,livemode,is_test_account,status,amount_total,payment_status,duplicate_payment,created_at,completed_at,paid_at')),
     safe<EntitlementRow>('entitlements', () => readAll<EntitlementRow>('billing_entitlements', 'account_id,status,amount,currency,livemode,is_test_account,paid_at,activated_at', 'account_id')),
     safe<AnalysisRow>('analyses', () => readAll<AnalysisRow>('aid_analyses', 'created_at,document_kind,file_count')),
     safe<string>('exclusions', async () => excludedAccountIds(env.excludedEmails)),
+    safe<AttributionRow>('attribution', readAttribution),
   ]);
   return {
     trackedUsers, accounts, accountEvents, uploads, guestLinks, questions, monetization, checkouts, entitlements, analyses,
+    attribution, attributionInstalled,
     excludedAccountIds: excluded,
     failed,
   };

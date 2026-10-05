@@ -8,6 +8,7 @@
  */
 
 import { FUNNEL, METRICS, SOURCE_NAMES, type MetricId } from './definitions';
+import { computeAttribution } from './attribution';
 import { DAY, HOUR, addDays, dayKey, dayLabel, daysBetween, hourLabel, inWindow, toMs, windows, type Window, type WindowPair } from './time';
 import type {
   ActivityBlock, Comparison, DashboardData, FunnelStage, GrowthSeries, Metric, MetricFormat, RateMetric, RawData, SourceKey,
@@ -400,6 +401,7 @@ export function computeDashboard(raw: RawData, now: number): DashboardData {
     analyses: { metrics: analysisMetrics, byKind: okAnalyses ? [...kinds.entries()].map(([kind, v]) => ({ kind, ...v })).sort((a, b) => b.analyses - a.analyses) : [] },
     performance,
     activity,
+    attribution: computeAttribution(raw, ok),
     unavailable: [...new Set(raw.failed)].map((s) => SOURCE_NAMES[s]),
   };
 }

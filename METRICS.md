@@ -134,6 +134,35 @@ New event types are never lost: every `event_type` in `monetization_events` (liv
 
 Only accounts created after the paywall launched record funnel events, so the step from Accounts Created to My Aid Entered is a lower bound for older accounts.
 
+## Traffic → Revenue (attribution)
+
+Source: `acquisition_attribution` in the main FYNQ database (one row per guest browser, written by the FYNQ app on each page load). Until that migration is applied the section says so and nothing else changes.
+
+**First touch is the rule.** A browser's source is the first visit FYNQ recorded for it, and it is never overwritten. An account's source is the earliest-seen browser it has used (linked through `account_guests`). An account created *before* its earliest recorded visit predates tracking, so it is **Legacy / Unattributed**, as is every browser that existed when tracking began and every browser with no row. Nothing is credited to TikTok (or any source) without a recorded touch.
+
+How a visit is classified (in the app, `server/attribution.js`), in priority order:
+1. `utm_source` (tiktok/tt → TikTok; ig/instagram → Instagram; fb/facebook/meta → Facebook; google → Google; anything else → Other, or Referral when `utm_medium=referral`)
+2. `?ref=` shared link → Referral
+3. ad click id present: `ttclid` → TikTok, `gclid` → Google, `fbclid` → Facebook (Instagram if the referrer is instagram.com)
+4. referrer host: tiktok.com, instagram.com, facebook.com, google.* → that channel; known sites (Reddit, YouTube, Bing…) → Other; any other site → Referral
+5. nothing → Direct. FYNQ itself and Stripe Checkout are never a source.
+
+| Metric | Definition |
+|---|---|
+| Visitors | Guest browsers by their own first touch (founder-linked browsers excluded). Browsers with no row count as Legacy / Unattributed. |
+| Accounts | Accounts by account first touch (excluded accounts left out). |
+| Unique uploaders / upload events | People (account, else browser) with `upload_events` rows, by their first touch. |
+| Completed question flows | `beta_questions` with `state = 'success'`, by the asker's first touch. |
+| Paywall views | Distinct accounts with a live, non-test `paywall_viewed` event. |
+| Checkout starts | Distinct accounts with a live, non-test checkout session or checkout-started event. |
+| Paying customers / revenue | Same rule as Real Revenue (live, active, non-test, not excluded), grouped by account first touch. The sources always add up to total real revenue. |
+| Post-payment completed analyses | Paying accounts with `analysis_completed`, `aid_analysis_completed` or `full_analysis_viewed` at or after payment. |
+| Funnel | TikTok visitors → registered → used My Aid → saw paywall → started checkout → paid → completed analysis. Visitors are browsers; later steps are accounts. |
+| Top campaigns | Grouped by first-touch source + `utm_campaign` + `utm_content`, sorted by revenue. Conversion = paying customers / visitors. |
+| Recent conversions (Activity tab) | The 20 attributed accounts with the newest activity, with the time of each step. Accounts appear as a masked reference (a one-way hash), never an email or id. Not exported. |
+
+Stripe TEST-mode checkouts and payments, test accounts and `EXCLUDED_BILLING_EMAILS` accounts never count as conversions or revenue.
+
 ## Activity feed
 
 The last 7 days in 3-hour blocks (Central Time), newest first. Each block counts:

@@ -1,10 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { DashboardData, GrowthSeries, Metric } from '@/lib/metrics/types';
+import type { AttributionData, DashboardData, GrowthSeries, Metric } from '@/lib/metrics/types';
 import { formatValue, syncedAt } from '@/lib/format';
 import { BarChart, LineChart } from './charts';
-import { ActivityFeed, Funnel, HBars, KpiCard, RateCard, Section, Seg, TodayStrip } from './parts';
+import { ActivityFeed, CampaignTable, ConversionFeed, Funnel, HBars, KpiCard, RateCard, RateTable, Section, Seg, SourceTable, TodayStrip } from './parts';
 
 type Tab = 'overview' | 'activity' | 'performance';
 type Range = '24h' | '7d' | '30d' | 'all';
@@ -80,6 +80,51 @@ function GrowthPanel({ title, series, noun, total }: { title: string; series: Gr
         <BarChart ariaLabel={`${title}, new per ${range === '24h' ? 'hour' : 'day'}`} height={260} points={pts.map((p) => ({ label: p.label, value: p.added }))} tooltip={(_, i) => tip(pts[i])} />
       )}
     </div>
+  );
+}
+
+// ------------------------------------------------------------ traffic → revenue
+
+const sinceFmt = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', month: 'short', day: 'numeric', year: 'numeric' });
+
+function Traffic({ a }: { a: AttributionData }) {
+  if (a.state !== 'ok') {
+    return (
+      <Section eyebrow="Traffic → Revenue" title="Where users and revenue come from">
+        <div className="empty">{a.state === 'not_installed' ? 'Traffic attribution starts once its database migration is applied.' : 'Traffic attribution could not be loaded right now.'}</div>
+      </Section>
+    );
+  }
+  const since = a.trackingSince ? `tracking since ${sinceFmt.format(new Date(a.trackingSince))}` : 'no attributed visits yet';
+  return (
+    <>
+      <Section eyebrow="Traffic → Revenue" title="TikTok to revenue" sub={`First touch: where each person first came from · live payments only · ${since}`}>
+        <div className="kpis five">{a.tiktok.map((m) => <KpiCard key={m.id} metric={m} size="small" />)}</div>
+        <div className="grid2" style={{ marginTop: 12 }}>
+          <div className="card">
+            <p className="cardTitle">TikTok funnel</p>
+            <p className="cardSub">Visitors are browsers; every later step is an account · % from the step before</p>
+            <div style={{ marginTop: 16 }}><Funnel stages={a.tiktokFunnel} /></div>
+          </div>
+          <div className="card">
+            <p className="cardTitle">TikTok conversion</p>
+            <p className="cardSub">Each rate shows what it divides</p>
+            <div style={{ marginTop: 6 }}><RateTable rates={a.tiktokRates} /></div>
+          </div>
+        </div>
+      </Section>
+
+      <Section eyebrow="Sources" title="Where users come from" sub="Every visitor, account and payment by first-touch source. Unknown traffic is never counted as TikTok">
+        <div className="card">
+          <SourceTable rows={a.sources} />
+          <p className="note">Legacy / Unattributed: browsers and accounts from before tracking began, or with no reliable source. Their payments stay in total revenue.</p>
+        </div>
+      </Section>
+
+      <Section eyebrow="Campaigns" title="Top campaigns" sub="Grouped by utm_campaign and utm_content, sorted by revenue">
+        <div className="card"><CampaignTable rows={a.campaigns} /></div>
+      </Section>
+    </>
   );
 }
 
@@ -214,6 +259,8 @@ export function Dashboard({ initial }: { initial: DashboardData }) {
             <div className="kpis small" style={{ marginTop: 12 }}>{d.secondary.map((m) => <KpiCard key={`${m.id}-s`} metric={m} size="small" />)}</div>
           </Section>
 
+          <Traffic a={d.attribution} />
+
           <Section eyebrow="Growth" title="Users and accounts">
             <div className="grid2">
               <GrowthPanel title="Tracked User Growth" series={d.growth.tracked} noun={['user', 'users']} total="tracked" />
@@ -336,9 +383,16 @@ export function Dashboard({ initial }: { initial: DashboardData }) {
       )}
 
       {tab === 'activity' && (
-        <Section eyebrow="Activity" title="What happened" sub="Last 7 days in 3-hour blocks, newest first. Counts only">
-          <ActivityFeed blocks={d.activity} />
-        </Section>
+        <>
+          {d.attribution.state === 'ok' && (
+            <Section eyebrow="Recent conversions" title="Who converted, from where" sub="Attributed accounts, newest activity first. Accounts show as a masked reference, never an email">
+              <ConversionFeed trails={d.attribution.recent} />
+            </Section>
+          )}
+          <Section eyebrow="Activity" title="What happened" sub="Last 7 days in 3-hour blocks, newest first. Counts only">
+            <ActivityFeed blocks={d.activity} />
+          </Section>
+        </>
       )}
 
       {tab === 'performance' && (

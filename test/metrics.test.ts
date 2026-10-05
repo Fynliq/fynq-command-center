@@ -86,6 +86,8 @@ function raw(overrides: Partial<RawData> = {}): RawData {
       { created_at: ago(24 * 3), document_kind: 'fafsa-submission-summary', file_count: 1 },
       { created_at: ago(24 * 9), document_kind: 'cost-estimate', file_count: 1 },
     ],
+    attribution: [],
+    attributionInstalled: true,
     failed: [],
     ...overrides,
   };

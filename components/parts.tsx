@@ -2,8 +2,8 @@
 
 import type { ReactNode } from 'react';
 import { METRICS } from '@/lib/metrics/definitions';
-import type { ActivityBlock, FunnelStage, Metric, RateMetric } from '@/lib/metrics/types';
-import { formatChange, formatMetric } from '@/lib/format';
+import type { ActivityBlock, CampaignRow, ConversionTrail, FunnelStage, Metric, RateMetric, SourceRow } from '@/lib/metrics/types';
+import { formatChange, formatMetric, formatValue } from '@/lib/format';
 import { Ring, Sparkline } from './charts';
 
 const definitionOf = (id: string) => (METRICS as Record<string, { definition: string }>)[id]?.definition;
@@ -160,6 +160,111 @@ export function Seg<T extends string>({ value, options, onChange, label }: { val
       {options.map((o) => (
         <button key={o.value} type="button" aria-pressed={o.value === value} onClick={() => onChange(o.value)}>{o.label}</button>
       ))}
+    </div>
+  );
+}
+
+// ------------------------------------------------------------ traffic → revenue
+
+const n = (v: number) => v.toLocaleString('en-US');
+const pctCell = (v: number | null) => formatValue(v, 'percent');
+const money = (v: number) => formatValue(v, 'usd');
+
+export function RateTable({ rates }: { rates: RateMetric[] }) {
+  return (
+    <table className="table">
+      <tbody>
+        {rates.map((r) => (
+          <tr key={r.id}>
+            <td><span className="chName">{r.label}</span><div className="tag">{r.numerator === null ? '' : `${n(r.numerator)} ${r.numeratorLabel} of ${n(r.denominator ?? 0)} ${r.denominatorLabel}`}</div></td>
+            <td className="num">{r.value === null ? '—' : pctCell(r.value)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+export function SourceTable({ rows }: { rows: SourceRow[] }) {
+  return (
+    <div className="tableWrap">
+      <table className="table wide">
+        <thead>
+          <tr><th>Source</th><th className="num">Visitors</th><th className="num">Accounts</th><th className="num">Unique uploaders</th><th className="num">Paywall views</th><th className="num">Checkout starts</th><th className="num">Paying</th><th className="num">Revenue</th><th className="num">Visitor → Paid</th></tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.channel} className={r.channel === 'legacy' ? 'muted' : undefined}>
+              <td><span className="chName">{r.label}</span></td>
+              <td className="num">{n(r.visitors)}</td>
+              <td className="num">{n(r.accounts)}</td>
+              <td className="num">{n(r.uploaders)}</td>
+              <td className="num">{n(r.paywallViews)}</td>
+              <td className="num">{n(r.checkoutStarts)}</td>
+              <td className={`num${r.payingCustomers > 0 ? ' hl' : ''}`}>{n(r.payingCustomers)}</td>
+              <td className={`num${r.revenue > 0 ? ' hl' : ''}`}>{money(r.revenue)}</td>
+              <td className="num">{pctCell(r.visitorToPaid)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+export function CampaignTable({ rows }: { rows: CampaignRow[] }) {
+  if (!rows.length) return <div className="empty">No tagged campaigns yet. Links with utm_campaign and utm_content show up here.</div>;
+  return (
+    <div className="tableWrap">
+      <table className="table wide">
+        <thead>
+          <tr><th>Source</th><th>Campaign</th><th>Content</th><th className="num">Visitors</th><th className="num">Accounts</th><th className="num">My Aid users</th><th className="num">Paywall</th><th className="num">Checkouts</th><th className="num">Payments</th><th className="num">Revenue</th><th className="num">Conversion</th></tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={`${r.channel}|${r.source}|${r.campaign}|${r.content}`}>
+              <td><span className="chName">{r.channelLabel}</span>{r.source && r.source !== r.channel ? <div className="tag">{r.source}</div> : null}</td>
+              <td><span className="chName">{r.campaignLabel}</span></td>
+              <td>{r.contentLabel}</td>
+              <td className="num">{n(r.visitors)}</td>
+              <td className="num">{n(r.accounts)}</td>
+              <td className="num">{n(r.myAidUsers)}</td>
+              <td className="num">{n(r.paywallViews)}</td>
+              <td className="num">{n(r.checkouts)}</td>
+              <td className={`num${r.payments > 0 ? ' hl' : ''}`}>{n(r.payments)}</td>
+              <td className={`num${r.revenue > 0 ? ' hl' : ''}`}>{money(r.revenue)}</td>
+              <td className="num">{pctCell(r.conversion)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+const stepTime = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+
+export function ConversionFeed({ trails }: { trails: ConversionTrail[] }) {
+  if (!trails.length) return <div className="empty">No attributed accounts yet. They appear here as tracked visitors sign up.</div>;
+  return (
+    <div className="card">
+      <div className="feed">
+        {trails.map((t) => (
+          <div className="block" key={t.ref}>
+            <div className="blockDot" aria-hidden="true" />
+            <div>
+              <div className="convHead"><span className="chName">{t.channelLabel}</span>{t.campaign && <span> · {t.campaign}</span>}<span className="tag"> · account {t.ref}</span></div>
+              <ol className="trail">
+                {t.steps.map((s) => (
+                  <li key={s.id}>
+                    <span className={`chip${s.id === 'paid' ? ' money' : ''}`}>{s.label}<time dateTime={s.at}>{stepTime.format(new Date(s.at))}</time></span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

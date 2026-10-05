@@ -275,3 +275,23 @@ a { color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
 }
+
+/* Traffic → Revenue */
+.kpis.five { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 720px) { .kpis.five { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1180px) { .kpis.five { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+.table.wide { min-width: 820px; }
+.table.wide th, .table.wide td { padding-left: 14px; white-space: nowrap; }
+.table.wide th:first-child, .table.wide td:first-child { padding-left: 0; }
+.table tr.muted td, .table tr.muted .chName { color: var(--tx-3); }
+.table td.num.hl { color: var(--lime); }
+.chName { color: var(--tx); font-weight: 500; }
+.tag { font-family: var(--mono); font-size: 11px; color: var(--tx-3); }
+.convHead { font-size: 13px; color: var(--tx-2); }
+.trail { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.trail li { display: inline-flex; align-items: center; gap: 6px; }
+.trail li + li::before { content: "→"; color: var(--tx-3); }
+.trail .chip { display: inline-flex; align-items: baseline; gap: 6px; }
+.trail time { color: var(--tx-3); font-family: var(--mono); font-size: 11px; }
+.trail .chip.money time { color: inherit; opacity: 0.75; }
+.note { font-size: 12px; color: var(--tx-3); margin: 10px 0 0; }
