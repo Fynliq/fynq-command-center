@@ -8,7 +8,8 @@ import { Hero } from './hero/Hero';
 import { ExecutiveStrip } from './metrics/ExecutiveStrip';
 import { PulseBand } from './metrics/PulseBand';
 import { TodayBriefing } from './metrics/TodayBriefing';
-import { PhoneShowcase, type PhoneMetrics } from './device/PhoneShowcase';
+import { PhoneShowcase } from './device/PhoneShowcase';
+import { phoneMetricsFrom } from '@/lib/metrics/phone';
 import { GrowthChapter } from './sections/GrowthChapter';
 import { ActivationChapter } from './sections/ActivationChapter';
 import { EngagementChapter } from './sections/EngagementChapter';
@@ -21,7 +22,7 @@ import { Trajectory } from './milestones/Trajectory';
 import { Details } from './details/Details';
 import { InvestorMode } from './investor/InvestorMode';
 import { CeoView } from './views/CeoView';
-import { byId, DownloadIcon, v } from './ui';
+import { DownloadIcon } from './ui';
 
 const REFRESH_MS = 60_000;
 
@@ -85,15 +86,8 @@ export function CommandCenter({ initial }: { initial: DashboardData }) {
     window.location.href = '/login';
   };
 
-  const phone: PhoneMetrics = {
-    trackedUsers: v(byId(d.primary, 'trackedUsers')),
-    newUsersToday: v(byId(d.today, 'newTrackedToday')),
-    accounts: v(byId(d.primary, 'accounts')),
-    uploaders: v(byId(d.uploads.metrics, 'uniqueUploaders')),
-    paidCustomers: v(byId(d.primary, 'paidCustomers')),
-    revenue: v(byId(d.primary, 'realRevenue')),
-    growthHistory: d.growth.tracked.daily.slice(-30).map((p) => p.total),
-  };
+  // The phone reads the same refreshed response as the page: no separate queries.
+  const phone = phoneMetricsFrom(d);
 
   return (
     <div className={`cc view-${view}${presenting ? ' present' : ''}`}>

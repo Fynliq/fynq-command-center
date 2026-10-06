@@ -740,49 +740,108 @@ body { background: var(--background); color: var(--text-primary); font-feature-s
 .device2 { padding: clamp(96px, 12vw, 176px) 0; border-top: 1px solid var(--border); overflow: hidden; }
 .deviceGrid { display: grid; gap: var(--space-8); align-items: center; }
 @media (min-width: 1000px) { .deviceGrid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
-.deviceStage { --p: 0; display: grid; place-items: center; perspective: 1600px; padding: var(--space-6) 0; }
-.dev {
-  position: relative; width: min(340px, 78vw); aspect-ratio: 9 / 19.2;
-  transform: translateX(calc((1 - var(--p)) * 8%)) rotateY(calc((1 - var(--p)) * -16deg)) rotateX(calc((1 - var(--p)) * 8deg)) rotateZ(calc((1 - var(--p)) * 3deg)) scale(calc(0.92 + var(--p) * 0.08));
-  transform-style: preserve-3d; will-change: transform;
+/* The phone: a flagship-style device in CSS only. No photography, no third-party marks.
+ * Proportions follow a modern 6.3" pro phone: ~0.48 aspect, ~2% bezels, deep corner radius. */
+.ipStage {
+  --w: clamp(250px, min(27vw, 39vh), 420px);
+  justify-self: center; width: var(--w); padding: 4% 0 14%;
+  transition: opacity 800ms var(--ease-out), transform 800ms var(--ease-out);
+  transform-origin: 50% 70%;
 }
-.devShadow { position: absolute; left: 8%; right: 8%; bottom: -6%; height: 10%; border-radius: 50%; background: radial-gradient(closest-side, rgba(0, 0, 0, 0.9), transparent); filter: blur(18px); transform: translateZ(-40px); }
-.devBody {
-  position: absolute; inset: 0; border-radius: 13.5% / 6.4%; padding: 2.2%;
-  background: linear-gradient(145deg, #3a3d3a 0%, #1a1c1a 18%, #0d0e0d 50%, #1d201d 82%, #3b3e3b 100%);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.18), 0 40px 80px -30px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(0, 0, 0, 0.6);
+.ipStage.pre { opacity: 0; transform: translateY(40px) rotate(3deg) scale(0.94); }
+.ipFloat { --float: 0px; transform: translate3d(0, var(--float), 0); transition: transform 600ms var(--ease-out); will-change: transform; }
+.ip { position: relative; width: 100%; aspect-ratio: 71.5 / 149.6; container-type: inline-size; }
+.ipShadow {
+  position: absolute; left: 6%; right: 6%; bottom: -7%; height: 9%; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.5) 55%, transparent);
+  filter: blur(14px); opacity: 0.9;
 }
-.devKey { position: absolute; right: -1.2%; width: 1.4%; border-radius: 0 3px 3px 0; background: linear-gradient(90deg, #121312, #3a3d3a); }
-.devKey.k1 { top: 22%; height: 9%; }
-.devKey.k2 { top: 34%; height: 5%; }
-.devScreen {
-  position: relative; height: 100%; border-radius: 11.8% / 5.6%; overflow: hidden; background: #050605; container-type: inline-size;
-  filter: brightness(calc(0.62 + var(--p) * 0.38));
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+.ip::after { /* faint green bounce light from the screen onto the floor */
+  content: ""; position: absolute; left: 18%; right: 18%; bottom: -10%; height: 8%; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(184, 240, 74, 0.10), transparent); filter: blur(20px); pointer-events: none;
 }
-.devCam { position: absolute; z-index: 3; top: 2.4%; left: 50%; width: 3.2cqw; height: 3.2cqw; min-width: 8px; min-height: 8px; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(circle at 35% 35%, #2a3a44, #050607 60%); box-shadow: 0 0 0 2px #000; }
-.devGlare { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0) 32%); opacity: calc(1 - var(--p) * 0.5); }
-@media (prefers-reduced-motion: reduce) { .dev { transform: none; } .devScreen { filter: none; } }
-
-/* The live mobile screen, sized in container units so it scales with the device. */
-.ps { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 15cqw 7cqw 6cqw; font-size: 4cqw; background: radial-gradient(90% 40% at 50% 0%, rgba(184, 240, 74, 0.07), transparent 70%), #050605; }
-.psTop { display: flex; align-items: center; justify-content: space-between; }
-.psBrand { display: inline-flex; align-items: center; gap: 2cqw; font-weight: var(--weight-semibold); letter-spacing: 0.06em; font-size: 4.2cqw; }
-.psBrand img { width: 5.4cqw; height: 5.4cqw; }
-.psLive { display: inline-flex; align-items: center; gap: 1.6cqw; font-size: 3cqw; letter-spacing: 0.16em; color: var(--text-secondary); }
-.psLive i { width: 1.8cqw; height: 1.8cqw; border-radius: 50%; background: var(--fynq-green); box-shadow: 0 0 2cqw rgba(184, 240, 74, 0.7); }
-.psHero { margin-top: 10cqw; }
-.psLabel { font-size: 3.2cqw; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-secondary); }
-.psBig { margin-top: 2cqw; font-size: 20cqw; line-height: 0.9; font-weight: var(--weight-semibold); letter-spacing: -0.05em; }
-.psUp { display: inline-block; margin-top: 3cqw; font-size: 3.6cqw; color: var(--fynq-green); }
-.psChart { margin-top: 7cqw; flex: 1 1 auto; min-height: 20cqw; display: flex; flex-direction: column; }
-.psChart svg { flex: 1 1 auto; width: 100%; min-height: 18cqw; }
-.psChart p { margin: 2cqw 0 0; display: flex; justify-content: space-between; font-size: 2.8cqw; color: var(--text-tertiary); letter-spacing: 0.08em; text-transform: uppercase; }
-.psList { margin-top: 5cqw; display: grid; }
-.psList > div { display: flex; justify-content: space-between; align-items: baseline; padding: 3.2cqw 0; border-top: 1px solid rgba(255, 255, 255, 0.08); }
-.psList span { font-size: 3.6cqw; color: var(--text-secondary); }
-.psList b { font-size: 5.2cqw; font-weight: var(--weight-medium); letter-spacing: -0.02em; }
-.psHome { margin: 4cqw auto 0; width: 34cqw; height: 1.2cqw; border-radius: 1cqw; background: rgba(255, 255, 255, 0.3); }
+/* Dark titanium band: brushed gradient with lit and shaded edges. */
+.ipFrame {
+  position: absolute; inset: 0; border-radius: 17.5cqw; padding: 1.25cqw;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0) 12%, rgba(255, 255, 255, 0) 88%, rgba(255, 255, 255, 0.06)),
+    linear-gradient(90deg, #2c2d2c 0%, #4a4b48 2.5%, #1f201f 6%, #2a2b29 50%, #1f201f 94%, #4a4b48 97.5%, #2c2d2c 100%);
+  box-shadow:
+    inset 0 0 0 0.25cqw rgba(255, 255, 255, 0.10),
+    inset 0 0.35cqw 0.4cqw rgba(255, 255, 255, 0.10),
+    0 0 0 0.2cqw rgba(0, 0, 0, 0.85),
+    0 6cqw 12cqw -4cqw rgba(0, 0, 0, 0.9),
+    0 24cqw 40cqw -18cqw rgba(0, 0, 0, 0.95);
+}
+.ipBezel { position: relative; height: 100%; border-radius: 16.4cqw; padding: 2.2cqw; background: #000; box-shadow: inset 0 0 0 0.3cqw #0b0b0b; }
+.ipScreen {
+  position: relative; height: 100%; border-radius: 14.4cqw; overflow: hidden; background: #000; container-type: inline-size;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.035);
+}
+/* Side buttons: same titanium, slightly proud of the band. */
+.ipBtn { position: absolute; width: 0.9cqw; border-radius: 0.6cqw; background: linear-gradient(90deg, #3d3e3b, #252624 60%, #161716); box-shadow: inset 0 0 0 0.12cqw rgba(255, 255, 255, 0.08); }
+.ipBtn.action, .ipBtn.volUp, .ipBtn.volDown { left: -0.7cqw; }
+.ipBtn.power, .ipBtn.camera { right: -0.7cqw; background: linear-gradient(270deg, #3d3e3b, #252624 60%, #161716); }
+.ipBtn.action { top: 18.5%; height: 3.6%; }
+.ipBtn.volUp { top: 25.5%; height: 6.6%; }
+.ipBtn.volDown { top: 33.6%; height: 6.6%; }
+.ipBtn.power { top: 27%; height: 10%; }
+.ipBtn.camera { top: 58%; height: 5.4%; width: 0.7cqw; right: -0.55cqw; background: linear-gradient(270deg, #2b2c2a, #1a1b1a); box-shadow: inset 0 0 0 0.15cqw rgba(255, 255, 255, 0.12); }
+/* Pill-shaped front-camera cutout. */
+.ipIsland { position: absolute; z-index: 4; top: 2.6cqw; left: 50%; transform: translateX(-50%); width: 31cqw; height: 9.2cqw; border-radius: 9cqw; background: #000; box-shadow: 0 0 0 0.3cqw rgba(0, 0, 0, 0.9); }
+.ipIsland i { position: absolute; right: 3cqw; top: 50%; width: 3.6cqw; height: 3.6cqw; transform: translateY(-50%); border-radius: 50%; background: radial-gradient(circle at 38% 35%, #1d2a3a 0%, #0b1018 45%, #020304 70%); box-shadow: inset 0 0 0 0.35cqw #0a0c10; }
+.ipStatus { position: absolute; z-index: 3; top: 4.6cqw; left: 9cqw; right: 8cqw; display: flex; justify-content: space-between; align-items: center; font-size: 4cqw; font-weight: 600; letter-spacing: -0.01em; color: var(--text-primary); }
+.ipStatusIcons { display: inline-flex; align-items: center; gap: 1.6cqw; }
+.ipStatusIcons svg { height: 3cqw; width: auto; fill: currentColor; }
+.ipStatusIcons svg:last-child { height: 3.3cqw; }
+/* The app. */
+.ipApp {
+  position: absolute; inset: 0; display: flex; flex-direction: column; padding: 17cqw 6.5cqw 9cqw;
+  background:
+    radial-gradient(110% 55% at 50% 0%, rgba(184, 240, 74, 0.075), transparent 62%),
+    linear-gradient(180deg, #050605 0%, #000 60%);
+  color: var(--text-primary); font-family: var(--font-sans); font-variant-numeric: tabular-nums;
+}
+.ipTop { display: flex; align-items: center; justify-content: space-between; }
+.ipBrand { display: inline-flex; align-items: center; gap: 1.8cqw; font-size: 4.4cqw; font-weight: 600; letter-spacing: 0.08em; }
+.ipBrand img { width: 5.2cqw; height: 5.2cqw; object-fit: contain; }
+.ipLive { display: inline-flex; align-items: center; gap: 1.5cqw; padding: 1.1cqw 2.6cqw; border-radius: 9cqw; border: 1px solid rgba(255, 255, 255, 0.10); font-size: 2.7cqw; letter-spacing: 0.16em; font-weight: 500; color: var(--text-secondary); }
+.ipLive i { width: 1.6cqw; height: 1.6cqw; border-radius: 50%; background: var(--fynq-green); box-shadow: 0 0 2cqw rgba(184, 240, 74, 0.8); animation: ipBlink 2.4s ease-in-out infinite; }
+@keyframes ipBlink { 50% { opacity: 0.45; } }
+.ipHero { margin-top: 9cqw; }
+.ipBig { line-height: 0.86; font-weight: 600; letter-spacing: -0.055em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ipLabel { margin: 3cqw 0 0; font-size: 3.4cqw; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-secondary); }
+.ipUp { margin: 1.6cqw 0 0; font-size: 3.6cqw; color: var(--fynq-green); font-weight: 500; }
+.ipChart { position: relative; margin-top: 6cqw; flex: 1 1 auto; min-height: 16cqw; display: flex; flex-direction: column; }
+.ipChart svg { flex: 1 1 auto; width: 100%; min-height: 14cqw; overflow: visible; }
+.ipChartDot { position: absolute; width: 2cqw; height: 2cqw; margin: -1cqw 0 0 -1cqw; border-radius: 50%; background: var(--fynq-green); box-shadow: 0 0 0 0.8cqw rgba(184, 240, 74, 0.18), 0 0 3cqw rgba(184, 240, 74, 0.7); }
+.ipChart p { margin: 1.8cqw 0 0; display: flex; justify-content: space-between; font-size: 2.6cqw; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); }
+.ipGrid { margin-top: 5cqw; display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid rgba(255, 255, 255, 0.08); }
+.ipGrid > div { display: flex; flex-direction: column; gap: 0.8cqw; padding: 3.6cqw 0; min-width: 0; }
+.ipGrid > div:nth-child(even) { padding-left: 4.5cqw; border-left: 1px solid rgba(255, 255, 255, 0.08); }
+.ipGrid > div:nth-child(n + 3) { border-top: 1px solid rgba(255, 255, 255, 0.08); }
+.ipGrid > div > b, .ipRevenue > b { font-size: 7.6cqw; font-weight: 500; letter-spacing: -0.035em; line-height: 1; white-space: nowrap; }
+.ipGrid > div > span, .ipRevenue > span { font-size: 3.2cqw; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ipGrid em { font-style: normal; color: var(--fynq-green); }
+.ipRevenue { display: flex; align-items: baseline; justify-content: space-between; padding: 3.6cqw 0 0; border-top: 1px solid rgba(255, 255, 255, 0.08); }
+.ipHome { position: absolute; z-index: 3; bottom: 2.2cqw; left: 50%; transform: translateX(-50%); width: 36cqw; height: 1.3cqw; border-radius: 1cqw; background: rgba(255, 255, 255, 0.55); }
+/* Glass: one soft diagonal sheen and a lit top edge. */
+.ipGlass {
+  position: absolute; inset: 0; z-index: 5; pointer-events: none; border-radius: inherit;
+  background:
+    linear-gradient(118deg, rgba(255, 255, 255, 0.075) 0%, rgba(255, 255, 255, 0.025) 26%, rgba(255, 255, 255, 0) 38%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0) 6%);
+}
+@media (max-width: 767px) {
+  .ipStage { --w: min(68vw, 290px); padding-bottom: 10%; }
+  .ipStage.pre { transform: translateY(40px) scale(0.94); } /* straight-on on phones */
+  .ipFloat { transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ipStage, .ipStage.pre { opacity: 1; transform: none; transition: none; }
+  .ipFloat { transform: none; transition: none; }
+  .ipLive i { animation: none; }
+}
 
 /* ---------------------------------------------------------------- CEO View */
 .ceo { padding: calc(var(--nav-h) + clamp(40px, 6vh, 72px)) 0 var(--space-8); min-height: 100vh; }
@@ -856,5 +915,5 @@ body { background: var(--background); color: var(--text-primary); font-feature-s
 .loginBtn:hover { background: #fff; }
 
 /* Grid children never push past the screen (inputs and long numbers have wide intrinsic sizes). */
-.trajGrid > *, .actGrid > *, .engGrid > *, .liveGrid > *, .roadGrid > *, .deviceGrid > *, .bandGrid > *, .nextGrid > *, .ceoGrid > * { min-width: 0; }
+.deviceGrid > *, .trajGrid > *, .actGrid > *, .engGrid > *, .liveGrid > *, .roadGrid > *, .deviceGrid > *, .bandGrid > *, .nextGrid > *, .ceoGrid > * { min-width: 0; }
 .inputRow input { width: 100%; }

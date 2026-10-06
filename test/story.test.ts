@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { computeDashboard } from '../lib/metrics/compute';
 import { biggestDrop, daysUntil, pulseState, velocityState } from '../lib/metrics/story';
 import type { RawData } from '../lib/metrics/types';
+import { phoneMetricsFrom } from '../lib/metrics/phone';
 
 const NOW = Date.parse('2026-10-05T17:00:00Z'); // 12:00 PM in Chicago
 const ago = (h: number) => new Date(NOW - h * 3_600_000).toISOString();
@@ -160,4 +161,21 @@ test('failed sources make story values null, never zero', () => {
   assert.ok(!f.live.some((e) => e.kind === 'visitor'));
   const g = computeDashboard(raw({ failed: ['entitlements'] }), NOW).story;
   assert.deepEqual(g.revenueSeries, []);
+});
+
+test('the phone display gets nine aggregate numbers from the shared response, nothing else', () => {
+  const d = computeDashboard(raw(), NOW);
+  const p = phoneMetricsFrom(d);
+  assert.deepEqual(Object.keys(p).sort(), ['filesSubmitted', 'growthHistory', 'newAccountsToday', 'newTrackedUsersToday', 'paidCustomers', 'realRevenue', 'totalAccounts', 'trackedUsers', 'uniqueUploaders']);
+  assert.equal(p.trackedUsers, 12);
+  assert.equal(p.totalAccounts, 3);
+  assert.equal(p.paidCustomers, 1, 'TEST and founder payments excluded, same as the page');
+  assert.equal(p.realRevenue, 1);
+  assert.equal(p.filesSubmitted, 5);
+  assert.ok(p.growthHistory.length <= 30 && p.growthHistory.every((n) => typeof n === 'number'));
+  assert.equal(p.growthHistory[p.growthHistory.length - 1], 12);
+  for (const [k, v] of Object.entries(p)) if (k !== 'growthHistory') assert.ok(v === null || typeof v === 'number', k);
+  const text = JSON.stringify(p);
+  for (const id of [A, B, FOUNDER, G]) assert.ok(!text.includes(id));
+  assert.equal(phoneMetricsFrom(computeDashboard(raw({ failed: ['trackedUsers'] }), NOW)).trackedUsers, null, 'unavailable is null, never 0');
 });
