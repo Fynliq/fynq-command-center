@@ -163,23 +163,30 @@ How a visit is classified (in the app, `server/attribution.js`), in priority ord
 
 Stripe TEST-mode checkouts and payments, test accounts and `EXCLUDED_BILLING_EMAILS` accounts never count as conversions or revenue.
 
-## Story sections (the redesigned page)
+## Story sections (COMMAND, CEO and Investor views)
 
-The page reads top to bottom as a story, but every number on it is one of the metrics above (same ids, same definitions, same exclusions). The pieces that are new are in `lib/metrics/story.ts`:
+Every number on the page is one of the metrics above (same ids, same definitions, same exclusions). What is new is computed server-side in `lib/metrics/story.ts`; only the Trajectory arithmetic runs in the browser, and nothing is ever written back.
 
 | Section | What it shows |
 |---|---|
-| Phone showcase | Tracked users, new today, accounts, unique uploaders, paying customers, real revenue, and the last 30 days of cumulative tracked users. |
-| "… and counting." | Total tracked users; new tracked users today, in the last 7 days and in the last 30 days (rolling windows). |
-| FYNQ Pulse | A fixed rule, no AI: new tracked users in the last 7 days vs the 7 days before. More than 20% higher is "accelerating", more than 20% lower "has slowed", otherwise "steady" ("has started" when the previous week was zero). The sign-up line uses the same rule on new accounts. The four figures are today's new users, accounts, files uploaded and real revenue. |
-| Today at FYNQ | The eight Today metrics, compared with yesterday at the same time. |
-| From attention to revenue | Tracked users → accounts → unique uploaders → accounts that saw the paywall → accounts that clicked unlock → accounts that started checkout → paying customers. Each percentage is that step divided by the one before. The steps mix browsers, people and accounts, and say which. |
-| Revenue | Paying customers, revenue today / 7D / 30D / all time, checkout-created, checkout-completed and payment-confirmed events, and paywall conversion = paying customers ÷ accounts that saw the paywall. |
-| Live activity | The 12 latest anonymous events: new visitor (back-to-back visitors are grouped), account created, files submitted (with the file count), question answered, checkout started, payment received. Money events follow the real-money rule. No names, emails, ids or locations; FYNQ does not record location. |
-| What's next | Progress to 500 / 1,000 / 2,500 / 5,000 tracked users, 100 / 250 accounts and 25 / 100 paying customers. |
-| Road to 5,000 | A target, not a forecast. Days left until Dec 31 (Central Time). Pace needed = (5,000 − tracked users) ÷ days left. Current pace = new tracked users in the last 7 days ÷ 7. |
-| Investor View | Tracked users, MAU, accounts, unique uploaders, files processed (files in sessions that were read successfully), paying customers, revenue, new users in 7 and 30 days, the growth chart and the conversion journey. |
-| Every metric, in detail | Everything else from before the redesign, unchanged. |
+| Hero | Total tracked users; new today (since midnight Central) and in the last 7 rolling days; "Updated N seconds ago" counts from `generatedAt`, the time the numbers were computed. |
+| Executive strip | MAU, accounts, unique uploaders, files submitted, paid customers, real revenue. "7D growth" = the total now against the total 7 days ago. MAU has no 7-day history and says "Active, last 30 days" instead. |
+| FYNQ Pulse | `PULSE_RULE`: new tracked users, last 7 days vs the 7 before. +20% or more with new accounts not falling = Accelerating; +5% or more = Growing; down less than 10% = Steady; down 10% or more = Cooling. Signals: traffic, accounts and upload sessions (7 days vs the 7 before) and paying customers. Never claims a cause. |
+| Growth Velocity | `VELOCITY_RULE`: new tracked users in the last 7 days ÷ 7 against the 7 days before. More than 10% faster = Accelerating, more than 10% slower = Slowing, otherwise Stable. |
+| Today | New tracked users, new accounts, upload sessions, files submitted, successful reads (sessions with outcome = read), paywall views, checkout starts, payments, revenue — each against yesterday at the same time. |
+| 01 Growth | Tracked-user chart (24H hourly; 7D/30D/90D/ALL daily; cumulative or per day) and Tracked, MAU, New Today/7D/30D. |
+| The FYNQ Journey | Visitors (tracked users) → accounts → unique uploaders → value (uploaders with a successful read) → accounts that saw the paywall → accounts that started checkout → paying customers. A share is shown only when it is ≤ 100%, because the stages count different things. |
+| 02 Activation | Files submitted, upload sessions, unique uploaders, successful unique uploaders, successful files, upload success rate, figures extracted. The files chart labels the "Highest upload day": most files in view, the most recent on a tie. |
+| 03 Engagement | 7-day and 24-hour active, questions asked/answered, aid analyses on file, logins in the last 7 days, files per uploader; sign-ups and logins for 30 days. |
+| 04 Monetization | Real revenue and paying customers (live, non-test, non-excluded active entitlements). Payment funnel: accounts at paywall viewed → unlock clicked → checkout created → checkout completed → payment confirmed → paying customers; the largest drop-off is the biggest share lost between neighbouring steps. Revenue timeline: per day, cumulative, and customers so far; the axis tops out at no less than $10 / 5 customers so small numbers are drawn small. |
+| 05 Retention | Returning accounts (login_count > 1) and their share, 7-day active, MAU, logins per account. "Cohort retention tracking not yet available." |
+| Live | The 14 latest anonymous events: visitors (back-to-back grouped), account created, upload completed (read; with the file count), files submitted (not read), question answered, paywall viewed, checkout created, payment confirmed (real money only). No names, emails, ids, payment references or places. |
+| Next. | 500 / 1,000 / 2,500 / 5,000 / 10,000 tracked users, 100 / 500 / 1,000 accounts, 10 / 25 / 100 customers. "Completed" carries a date only when the Nth row's own timestamp shows it. |
+| Road to 5,000 | Target model, not a forecast. Remaining = 5,000 − tracked users; days left until Dec 31 (Central); required pace = remaining ÷ days left; current pace = last 7 days ÷ 7; gap = current − required. |
+| Trajectory | Scenarios, not forecasts. Conservative 0.5×, Current Pace 1×, Strong Growth 2×, Breakout 4× the current pace, or any users/day typed in. Total = tracked users today + users/day × days, rounded down, at 30 days, 90 days and Dec 31. Computed in the browser; never stored. |
+| CEO View | One screen: "Is FYNQ growing?" answered by the Pulse rule, then the facts — today, velocity, account growth, activation, payments, retention, the nearest milestone, the 5,000 target and the Pulse signals. |
+| Investor View | Seven slides: tracked users, growth chart, MAU and accounts, uploaders and files processed (files in sessions read successfully), customers and revenue, the journey, retention. Presentation Mode hides the navigation, goes full screen, and moves with the arrow keys (Esc exits). |
+| Every metric, in detail | Everything from before the redesign, unchanged. |
 
 ## Activity feed
 

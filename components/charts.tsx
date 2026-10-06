@@ -78,19 +78,21 @@ interface LineChartProps {
   /** Area wash under the first series (single-series charts). */
   area?: boolean;
   money?: boolean;
+  /** Smallest value the y-axis may top out at, so a small number is drawn small ($2 looks like $2). */
+  minTop?: number;
   ariaLabel: string;
   tooltip: (p: SeriesPoint, index: number) => ReactNode;
 }
 
 /** Line / area chart with a snapping crosshair and one tooltip for every series. */
-export function LineChart({ points, series, height = 260, area = false, money = false, ariaLabel, tooltip }: LineChartProps) {
+export function LineChart({ points, series, height = 260, area = false, money = false, minTop = 1, ariaLabel, tooltip }: LineChartProps) {
   const [ref, width] = useWidth<HTMLDivElement>();
   const [hover, setHover] = useState<number | null>(null);
   const gid = useId().replace(/:/g, '');
   const pad = { top: 12, right: 12, bottom: 26, left: 40 };
   const w = width - pad.left - pad.right;
   const h = height - pad.top - pad.bottom;
-  const max = Math.max(1, ...points.flatMap((p) => p.values));
+  const max = Math.max(minTop, ...points.flatMap((p) => p.values));
   const ticks = niceTicks(max);
   const top = ticks[ticks.length - 1] || 1;
   const x = (i: number) => pad.left + (points.length <= 1 ? w / 2 : (i / (points.length - 1)) * w);
@@ -172,18 +174,22 @@ interface BarChartProps {
   points: { label: string; value: number }[];
   color?: string;
   height?: number;
+  money?: boolean;
+  minTop?: number;
+  /** A small fixed label over one column, e.g. "Highest upload day". */
+  annotate?: { index: number; text: string } | null;
   ariaLabel: string;
   tooltip: (p: { label: string; value: number }, index: number) => ReactNode;
 }
 
 /** Columns from one baseline; the hovered column lifts, the rest dim. */
-export function BarChart({ points, color = 'var(--lime)', height = 220, ariaLabel, tooltip }: BarChartProps) {
+export function BarChart({ points, color = 'var(--lime)', height = 220, money = false, minTop = 1, annotate = null, ariaLabel, tooltip }: BarChartProps) {
   const [ref, width] = useWidth<HTMLDivElement>();
   const [hover, setHover] = useState<number | null>(null);
-  const pad = { top: 12, right: 8, bottom: 26, left: 36 };
+  const pad = { top: annotate ? 40 : 12, right: 8, bottom: 26, left: 40 };
   const w = width - pad.left - pad.right;
   const h = height - pad.top - pad.bottom;
-  const ticks = niceTicks(Math.max(1, ...points.map((p) => p.value)));
+  const ticks = niceTicks(Math.max(minTop, ...points.map((p) => p.value)));
   const top = ticks[ticks.length - 1] || 1;
   const slot = w / Math.max(1, points.length);
   const barW = Math.max(2, Math.min(24, slot - 2));
@@ -204,7 +210,7 @@ export function BarChart({ points, color = 'var(--lime)', height = 220, ariaLabe
         {ticks.map((t) => (
           <g key={t}>
             <line className="gridline" x1={pad.left} x2={width - pad.right} y1={pad.top + h - (t / top) * h} y2={pad.top + h - (t / top) * h} />
-            <text className="axis" x={pad.left - 8} y={pad.top + h - (t / top) * h + 4} textAnchor="end">{tickText(t)}</text>
+            <text className="axis" x={pad.left - 8} y={pad.top + h - (t / top) * h + 4} textAnchor="end">{tickText(t, money)}</text>
           </g>
         ))}
         {points.map((p, i) => {
@@ -216,6 +222,17 @@ export function BarChart({ points, color = 'var(--lime)', height = 220, ariaLabe
           const d = bh <= 0 ? '' : `M${x0},${pad.top + h} L${x0},${y0 + r} Q${x0},${y0} ${x0 + r},${y0} L${x0 + barW - r},${y0} Q${x0 + barW},${y0} ${x0 + barW},${y0 + r} L${x0 + barW},${pad.top + h} Z`;
           return d ? <path key={i} className={`bar fade${hover !== null && hover !== i ? ' dim' : ''}`} d={d} fill={color} /> : null;
         })}
+        {annotate && points[annotate.index] && (() => {
+          const ax = bx(annotate.index) + barW / 2;
+          const ay = pad.top + h - (points[annotate.index].value / top) * h;
+          const anchor = ax < 90 ? 'start' : ax > width - 90 ? 'end' : 'middle';
+          return (
+            <g className="annot">
+              <line x1={ax} x2={ax} y1={ay - 6} y2={pad.top - 14} />
+              <text x={ax} y={pad.top - 20} textAnchor={anchor}>{annotate.text}</text>
+            </g>
+          );
+        })()}
         {points.map((p, i) => (i % labelEvery === 0 ? <text key={`l${i}`} className="axis" x={bx(i) + barW / 2} y={height - 6} textAnchor="middle">{p.label}</text> : null))}
       </svg>
       {hover !== null && (

@@ -24,11 +24,18 @@ export function useInViewOnce<T extends Element>(onEnter: () => void, rootMargin
     const el = ref.current;
     if (!el || done.current) return;
     if (typeof IntersectionObserver === 'undefined') { done.current = true; cb.current(); return; }
-    const io = new IntersectionObserver((entries) => {
-      if (entries.some((e) => e.isIntersecting)) { done.current = true; io.disconnect(); cb.current(); }
-    }, { rootMargin });
+    let raf = 0;
+    const fire = () => { if (done.current) return; done.current = true; io.disconnect(); window.removeEventListener('scroll', onScroll); cb.current(); };
+    const io = new IntersectionObserver((entries) => { if (entries.some((e) => e.isIntersecting)) fire(); }, { rootMargin });
+    // An anchor jump or a fast fling can carry an element from below the
+    // screen to above it without it ever intersecting; show it then too.
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => { raf = 0; if (el.getBoundingClientRect().top < window.innerHeight) fire(); });
+    };
     io.observe(el);
-    return () => io.disconnect();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => { io.disconnect(); window.removeEventListener('scroll', onScroll); if (raf) cancelAnimationFrame(raf); };
   }, [rootMargin]);
   return ref;
 }

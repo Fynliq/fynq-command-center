@@ -1,74 +1,98 @@
 'use client';
 
 import type { StoryData } from '@/lib/metrics/types';
-import { Reveal } from '../motion';
-import { CheckIcon } from '../ui';
+import { MetricNumber, Reveal } from '../motion';
+import { CheckIcon, fmtN, fmtRate } from '../ui';
 
-const fmtPct = (p: number) => `${p >= 10 || p === 0 ? p.toFixed(0) : p.toFixed(1)}%`;
+type M = StoryData['milestones'][number];
 
+const pctText = (p: number | null) => (p === null ? '—' : `${p >= 100 ? 100 : p.toFixed(1)}%`);
+const doneFmt = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', month: 'short', day: 'numeric' });
+const GROUPS: { metric: M['metric']; name: string }[] = [
+  { metric: 'trackedUsers', name: 'Tracked users' },
+  { metric: 'accounts', name: 'Accounts' },
+  { metric: 'paidCustomers', name: 'Customers' },
+];
+
+/**
+ * Next.: the next milestone of each kind, enormous, then the ladder. A
+ * finished one gets a small check and its date — only when the rows show
+ * exactly when it was crossed.
+ */
 export function Milestones({ milestones }: { milestones: StoryData['milestones'] }) {
   return (
-    <section className="stage center" aria-labelledby="ms-title">
-      <div className="wrap">
-        <Reveal>
-          <p className="kicker lime">Milestones</p>
-          <h2 id="ms-title" className="title" style={{ marginTop: 14 }}>What&rsquo;s next.</h2>
+    <section id="milestones" className="next" aria-labelledby="ms-title">
+      <div className="container">
+        <Reveal className="nextHead">
+          <p className="label">Milestones</p>
+          <h2 id="ms-title" className="displayM">Next.</h2>
         </Reveal>
-        <Reveal as="ul" className="msList">
-          {milestones.map((m) => (
-            <li className={`ms${m.done ? ' done' : ''}`} key={m.id}>
-              <div className="msTop">
-                <span className="lab">{m.done && <CheckIcon className="check" />}{m.label}</span>
-                <span className="val">
-                  {m.current === null ? 'Data temporarily unavailable' : `${m.current.toLocaleString('en-US')} / ${m.target.toLocaleString('en-US')} · ${fmtPct(m.pct ?? 0)}`}
-                </span>
-              </div>
-              <div className="msTrack" role="progressbar" aria-label={m.label} aria-valuemin={0} aria-valuemax={m.target} aria-valuenow={m.current ?? undefined}>
-                <div className="msFill" style={{ transform: `scaleX(${(m.pct ?? 0) / 100})` }} />
-              </div>
-            </li>
-          ))}
-        </Reveal>
+        <div className="nextGrid">
+          {GROUPS.map((g, gi) => {
+            const ladder = milestones.filter((m) => m.metric === g.metric);
+            const next = ladder.find((m) => !m.done) ?? ladder[ladder.length - 1];
+            if (!next) return null;
+            return (
+              <Reveal key={g.metric} className="nextCol" delay={gi * 80}>
+                <p className="label">{g.name}</p>
+                <p className="nextBig tnum">
+                  <MetricNumber value={next.current} /><span className="of"> / {fmtN(next.target)}</span>
+                </p>
+                <p className="nextPct tnum">{pctText(next.pct)}</p>
+                <div className="thinTrack" role="progressbar" aria-label={`${fmtN(next.target)} ${next.label}`} aria-valuemin={0} aria-valuemax={next.target} aria-valuenow={next.current ?? undefined}>
+                  <div className="thinFill" style={{ transform: `scaleX(${Math.min(1, (next.pct ?? 0) / 100)})` }} />
+                </div>
+                <ul className="ladder">
+                  {ladder.map((m) => (
+                    <li key={m.id} className={m.done ? 'done' : m.id === next.id ? 'current' : undefined}>
+                      <span className="tnum">{fmtN(m.target)}</span>
+                      <span className="ladderState">
+                        {m.done ? <><CheckIcon className="check" />{m.completedAt ? `Completed ${doneFmt.format(new Date(m.completedAt))}` : 'Completed'}</> : m.id === next.id ? 'Next' : ''}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </Reveal>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
 }
 
-const deadlineFmt = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
-const perDay = (n: number) => n.toLocaleString('en-US', { maximumFractionDigits: n < 10 ? 1 : 0 });
+const deadlineFmt = new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', timeZone: 'UTC' });
 
-/** A target, not a forecast: the pace needed versus the pace of the last 7 days. */
+/** Road to 5,000: a target model, not a forecast. Pace needed against the pace of the last 7 days. */
 export function RoadTo5000({ target }: { target: StoryData['target'] }) {
   const t = target;
-  const reached = t.current !== null && t.current >= t.goal;
   const deadline = deadlineFmt.format(new Date(`${t.deadline}T12:00:00Z`));
+  const r = 120;
+  const c = 2 * Math.PI * r;
+  const p = Math.min(1, Math.max(0, (t.pct ?? 0) / 100));
+  const ahead = t.gapPerDay !== null && t.gapPerDay >= 0;
   return (
-    <section className="stage graphite center" aria-labelledby="target-title">
-      <div className="wrap">
-        <Reveal>
-          <span className="badge">Growth target · not a forecast</span>
-          <h2 id="target-title" className="title" style={{ marginTop: 20 }}>Road to {t.goal.toLocaleString('en-US')}.</h2>
-          <p className="lede" style={{ marginTop: 16 }}>{t.goal.toLocaleString('en-US')} tracked users by {deadline}. {t.daysLeft} {t.daysLeft === 1 ? 'day' : 'days'} to go.</p>
+    <section id="target" className="road" aria-labelledby="target-title">
+      <div className="container roadGrid">
+        <Reveal className="roadText">
+          <p className="badge2">Target model — not forecast</p>
+          <h2 id="target-title" className="sectionTitle">Road to {fmtN(t.goal)}.</h2>
+          <p className="lead">{fmtN(t.goal)} tracked users by {deadline}. {t.daysLeft} {t.daysLeft === 1 ? 'day' : 'days'} left.</p>
+          <dl className="roadStats">
+            <div><dt>Current pace</dt><dd className="tnum">{fmtRate(t.pace7dPerDay)}<small>/day</small></dd><p className="metricNote">New tracked users per day, last 7 days.</p></div>
+            <div><dt>Required pace</dt><dd className="tnum">{fmtRate(t.requiredPerDay)}<small>/day</small></dd><p className="metricNote">{fmtN(t.remaining)} remaining ÷ {t.daysLeft} days.</p></div>
+            <div><dt>Gap</dt><dd className={`tnum ${t.gapPerDay === null ? '' : ahead ? 'pos' : 'neg'}`}>{t.gapPerDay === null ? '—' : `${t.gapPerDay >= 0 ? '+' : '−'}${fmtRate(Math.abs(t.gapPerDay))}`}<small>/day</small></dd><p className="metricNote">{t.gapPerDay === null ? '' : ahead ? 'Ahead of the pace needed.' : 'Behind the pace needed.'}</p></div>
+          </dl>
         </Reveal>
-        <Reveal className="targetBar">
-          <div className="msTrack" role="progressbar" aria-label="Progress to the target" aria-valuemin={0} aria-valuemax={t.goal} aria-valuenow={t.current ?? undefined}>
-            <div className="msFill" style={{ transform: `scaleX(${(t.pct ?? 0) / 100})` }} />
+        <Reveal className="roadRing" delay={80}>
+          <svg viewBox="0 0 280 280" role="img" aria-label={`${fmtN(t.current)} of ${fmtN(t.goal)} tracked users`}>
+            <circle cx="140" cy="140" r={r} className="ringBg" />
+            <circle cx="140" cy="140" r={r} className="ringFg" strokeDasharray={c} strokeDashoffset={c * (1 - p)} transform="rotate(-90 140 140)" />
+          </svg>
+          <div className="ringText">
+            <span className="ringNum"><MetricNumber value={t.current} /></span>
+            <span className="muted tnum">of {fmtN(t.goal)} · {t.pct === null ? '—' : `${t.pct.toFixed(1)}%`}</span>
           </div>
-          <div className="ends tnum"><span>{t.current === null ? '—' : t.current.toLocaleString('en-US')} now · {t.pct === null ? '—' : fmtPct(t.pct)}</span><span>{t.goal.toLocaleString('en-US')}</span></div>
-        </Reveal>
-        <Reveal className="targetGrid">
-          <div className="card"><b className="tnum">{t.requiredPerDay === null ? '—' : perDay(t.requiredPerDay)}</b><span>new users a day needed</span></div>
-          <div className="card"><b className="tnum">{t.pace7dPerDay === null ? '—' : perDay(t.pace7dPerDay)}</b><span>a day, last 7 days</span></div>
-          <div className="card"><b className="tnum" style={{ color: t.gapPerDay !== null && t.gapPerDay >= 0 ? 'var(--lime)' : undefined }}>{t.gapPerDay === null ? '—' : `${t.gapPerDay >= 0 ? '+' : '−'}${perDay(Math.abs(t.gapPerDay))}`}</b><span>{t.gapPerDay !== null && t.gapPerDay >= 0 ? 'a day ahead of the pace needed' : 'a day behind the pace needed'}</span></div>
-        </Reveal>
-        <Reveal>
-          <p className="lede targetSentence">
-            {reached
-              ? `${t.goal.toLocaleString('en-US')} reached.`
-              : t.requiredPerDay === null
-                ? 'Data temporarily unavailable.'
-                : `FYNQ needs about ${Math.ceil(t.requiredPerDay).toLocaleString('en-US')} new users a day to reach ${t.goal.toLocaleString('en-US')} by ${deadline}.`}
-          </p>
         </Reveal>
       </div>
     </section>

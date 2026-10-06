@@ -4,7 +4,7 @@ import type { DashboardData } from '@/lib/metrics/types';
 import { formatValue } from '@/lib/format';
 import { BarChart, LineChart } from '../charts';
 import { ActivityFeed, ConversionFeed, Funnel, HBars, KpiCard, RateCard } from '../parts';
-import { GrowthSection } from '../growth/GrowthSection';
+import { GrowthChart } from '../growth/GrowthSection';
 import { PlusIcon } from '../ui';
 
 const OUTCOME_LABEL: Record<string, string> = { read: 'Read successfully', unreadable: 'Unreadable', reader_error: 'Reader error', privacy_blocked: 'Blocked for privacy', no_aid_lines: 'No aid lines found' };
@@ -17,13 +17,13 @@ const pretty = (s: string) => s.replace(/[_-]+/g, ' ').replace(/^\w/, (c) => c.t
  */
 export function Details({ d }: { d: DashboardData }) {
   return (
-    <section className="stage tight" aria-labelledby="details-title">
-      <div className="wrap">
+    <section className="detailsSec" aria-labelledby="details-title">
+      <div className="container">
         <details className="detailsBox">
           <summary>
             <span>
-              <span className="kicker">For the operator</span>
-              <span id="details-title" className="headline" style={{ display: 'block', marginTop: 8 }}>Every metric, in detail.</span>
+              <span className="label">For the operator</span>
+              <span id="details-title" className="detailsTitle">Every metric, in detail.</span>
             </span>
             <PlusIcon />
           </summary>
@@ -36,7 +36,7 @@ export function Details({ d }: { d: DashboardData }) {
 
             <h3 className="h2" style={{ marginTop: 36 }}>Users and accounts</h3>
             <div className="grid2 even" style={{ marginTop: 12 }}>
-              <GrowthSection series={d.growth.accounts} title="Accounts" subtitle="Registered accounts over time." compact />
+              <div className="card"><p className="cardTitle">Accounts</p><p className="cardSub">Registered accounts over time.</p><GrowthChart series={d.growth.accounts} noun="accounts" height={300} /></div>
               <div className="card">
                 <p className="cardTitle">Sign-ups and logins</p>
                 <p className="cardSub">Last 30 days, per day</p>

@@ -3,21 +3,24 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { DashboardData } from '@/lib/metrics/types';
 import { syncedAt } from '@/lib/format';
-import { TopNav } from './navigation/TopNav';
+import { TopNav, type View } from './navigation/TopNav';
 import { Hero } from './hero/Hero';
-import { IPhoneShowcase, type PhoneMetrics } from './device/IPhoneShowcase';
-import { CompanyMoment } from './metrics/CompanyMoment';
-import { FynqPulse } from './metrics/FynqPulse';
-import { TodaySection } from './metrics/TodaySection';
-import { ProductStory } from './metrics/ProductStory';
-import { GrowthSection } from './growth/GrowthSection';
-import { ConversionJourney } from './funnel/ConversionJourney';
-import { RevenueSection } from './revenue/RevenueSection';
+import { ExecutiveStrip } from './metrics/ExecutiveStrip';
+import { PulseBand } from './metrics/PulseBand';
+import { TodayBriefing } from './metrics/TodayBriefing';
+import { PhoneShowcase, type PhoneMetrics } from './device/PhoneShowcase';
+import { GrowthChapter } from './sections/GrowthChapter';
+import { ActivationChapter } from './sections/ActivationChapter';
+import { EngagementChapter } from './sections/EngagementChapter';
+import { MonetizationChapter } from './revenue/MonetizationChapter';
+import { RetentionChapter } from './sections/RetentionChapter';
 import { TrafficSection } from './revenue/TrafficSection';
 import { LiveActivity } from './activity/LiveActivity';
 import { Milestones, RoadTo5000 } from './milestones/Milestones';
+import { Trajectory } from './milestones/Trajectory';
 import { Details } from './details/Details';
 import { InvestorMode } from './investor/InvestorMode';
+import { CeoView } from './views/CeoView';
 import { byId, DownloadIcon, v } from './ui';
 
 const REFRESH_MS = 60_000;
@@ -25,14 +28,15 @@ const REFRESH_MS = 60_000;
 /**
  * The page. It owns the live data: the server renders the first numbers,
  * then this refreshes them every 60 seconds (and when the tab comes back),
- * keeping the last good numbers if a refresh fails.
+ * keeping the last good numbers if a refresh fails. Three views share the
+ * same data: COMMAND (everything), CEO (one screen) and Investor (slides).
  */
 export function CommandCenter({ initial }: { initial: DashboardData }) {
   const [d, setD] = useState(initial);
   const [refreshing, setRefreshing] = useState(false);
   const [stale, setStale] = useState(false);
   const [beat, setBeat] = useState(0);
-  const [investor, setInvestor] = useState(false);
+  const [view, setView] = useState<View>('command');
   const [presenting, setPresenting] = useState(false);
   const busy = useRef(false);
 
@@ -68,11 +72,13 @@ export function CommandCenter({ initial }: { initial: DashboardData }) {
     else if (document.fullscreenElement) void document.exitFullscreen?.().catch(() => {});
   }, []);
 
-  const toggleInvestor = () => {
-    setInvestor((x) => !x);
-    if (presenting) present(false);
+  const changeView = (next: View) => {
+    if (presenting && next !== 'investor') present(false);
+    setView(next);
     window.scrollTo({ top: 0 });
   };
+
+  const startPresenting = () => { setView('investor'); window.scrollTo({ top: 0 }); present(true); };
 
   const logout = async () => {
     await fetch('/api/logout', { method: 'POST' }).catch(() => null);
@@ -90,32 +96,38 @@ export function CommandCenter({ initial }: { initial: DashboardData }) {
   };
 
   return (
-    <div className={presenting ? 'present' : undefined}>
-      <TopNav stale={stale} refreshing={refreshing} beat={beat} onRefresh={() => void refresh(true)} investor={investor} onInvestor={toggleInvestor} />
-      {investor ? (
-        <InvestorMode d={d} presenting={presenting} onPresent={present} onExit={toggleInvestor} />
-      ) : (
+    <div className={`cc view-${view}${presenting ? ' present' : ''}`}>
+      {!presenting && (
+        <TopNav stale={stale} refreshing={refreshing} beat={beat} onRefresh={() => void refresh(true)} view={view} onView={changeView} onPresent={startPresenting} onLogout={() => void logout()} />
+      )}
+
+      {view === 'investor' && <InvestorMode d={d} presenting={presenting} onPresent={present} />}
+      {view === 'ceo' && <CeoView d={d} />}
+      {view === 'command' && (
         <main>
-          <Hero generatedAt={d.generatedAt} stale={stale} />
-          <IPhoneShowcase metrics={phone} />
-          <CompanyMoment moment={d.story.moment} />
-          <FynqPulse pulse={d.story.pulse} />
-          <TodaySection today={d.today} />
-          <GrowthSection series={d.growth.tracked} />
-          <ProductStory d={d} />
-          <ConversionJourney journey={d.story.journey} />
-          <RevenueSection d={d} />
+          <Hero moment={d.story.moment} generatedAt={d.generatedAt} stale={stale} />
+          <ExecutiveStrip d={d} />
+          <PulseBand pulse={d.story.pulse} velocity={d.story.velocity} />
+          <TodayBriefing d={d} />
+          <GrowthChapter d={d} />
+          <ActivationChapter d={d} />
+          <PhoneShowcase metrics={phone} />
+          <EngagementChapter d={d} />
+          <MonetizationChapter d={d} />
           <TrafficSection a={d.attribution} />
+          <RetentionChapter r={d.story.retention} />
           <LiveActivity events={d.story.live} />
           <Milestones milestones={d.story.milestones} />
           <RoadTo5000 target={d.story.target} />
+          <Trajectory target={d.story.target} history={d.growth.tracked.daily.map((p) => p.total)} generatedAt={d.generatedAt} />
           {d.unavailable.length > 0 && (
-            <div className="notice" role="status"><p>Some numbers are temporarily unavailable ({d.unavailable.join(', ')}). They show as “—”; everything else is live.</p></div>
+            <div className="container"><div className="notice" role="status"><p>Some numbers are temporarily unavailable ({d.unavailable.join(', ')}). They show as “—”; everything else is live.</p></div></div>
           )}
           <Details d={d} />
           <footer className="foot">
-            <div className="wrap footIn">
-              <span>FYNQ Command Center · aggregate figures only · Central Time · updated {syncedAt(d.generatedAt)} · refreshes every 60 seconds</span>
+            <div className="container footIn">
+              <span className="footBrand"><img src="/fynq-logo.png" alt="" width={18} height={18} />FYNQ Command Center</span>
+              <span className="muted">Aggregate figures only · Central Time · updated {syncedAt(d.generatedAt)} · refreshes every 60 seconds</span>
               <span className="footActions">
                 <a className="navBtn" href="/api/export"><DownloadIcon />Export summary</a>
                 <button type="button" className="navBtn" onClick={() => void logout()}>Log out</button>

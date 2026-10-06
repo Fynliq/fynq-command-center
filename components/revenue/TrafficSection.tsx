@@ -9,12 +9,12 @@ const sinceFmt = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago',
 /** Traffic → Revenue: first-touch source for visitors, accounts and payments. */
 export function TrafficSection({ a }: { a: AttributionData }) {
   return (
-    <section id="traffic" className="stage" aria-labelledby="sources-title">
-      <div className="wrap">
+    <section id="traffic" className="trafficSec" aria-labelledby="sources-title">
+      <div className="container">
         <Reveal>
-          <p className="kicker lime">Traffic → Revenue</p>
-          <h2 id="sources-title" className="title" style={{ marginTop: 14 }}>Where they<br />come from.</h2>
-          <p className="lede" style={{ marginTop: 18, maxWidth: 680 }}>
+          <p className="label">Traffic → Revenue</p>
+          <h2 id="sources-title" className="sectionTitle">Where they <span className="soft">come from.</span></h2>
+          <p className="lead">
             {a.state === 'ok'
               ? `First touch: where each person first arrived from. ${a.trackingSince ? `Tracking since ${sinceFmt.format(new Date(a.trackingSince))}.` : 'No attributed visits yet.'} Unknown traffic is never counted as TikTok.`
               : a.state === 'not_installed'

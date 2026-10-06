@@ -3,38 +3,44 @@
 import type { LiveEvent } from '@/lib/metrics/types';
 import { ago, Reveal, useNow } from '../motion';
 
+const plural = (n: number, one: string, many: string) => `${n.toLocaleString('en-US')} ${n === 1 ? one : many}`;
+
 const WHAT: Record<LiveEvent['kind'], (n: number) => string> = {
-  visitor: (n) => (n === 1 ? 'New visitor' : `${n.toLocaleString('en-US')} new visitors`),
-  account: () => 'New account created',
-  files: (n) => `${n.toLocaleString('en-US')} ${n === 1 ? 'file' : 'files'} submitted`,
+  visitor: (n) => (n === 1 ? 'New tracked visitor' : `${n.toLocaleString('en-US')} new tracked visitors`),
+  account: () => 'Account created',
+  upload: (n) => `Upload completed · ${plural(n, 'file', 'files')}`,
+  files: (n) => `${plural(n, 'file', 'files')} submitted`,
   answer: () => 'Question answered',
-  checkout: () => 'Checkout started',
-  payment: () => 'Payment received',
+  paywall: () => 'Paywall viewed',
+  checkout: () => 'Checkout created',
+  payment: () => 'Payment confirmed',
 };
-const DOT: Record<LiveEvent['kind'], string> = { visitor: '', account: 'white', files: '', answer: '', checkout: 'white', payment: 'lime' };
+const TONE: Record<LiveEvent['kind'], string> = { visitor: 'dim', account: 'bright', upload: 'bright', files: 'dim', answer: 'dim', paywall: 'dim', checkout: 'bright', payment: 'green' };
 
 /**
- * What just happened, anonymously: the kind of event and when. No names,
- * emails, ids or places (FYNQ does not record location).
+ * Live: what just happened, anonymously. A kind of event and a time — no
+ * names, emails, ids, payment references or places (FYNQ records no
+ * location, so none is shown).
  */
-export function LiveActivity({ events }: { events: LiveEvent[] }) {
-  const now = useNow();
+export function LiveActivity({ events, limit }: { events: LiveEvent[]; limit?: number }) {
+  const now = useNow(15_000);
+  const list = limit ? events.slice(0, limit) : events;
   return (
-    <section id="activity" className="stage graphite" aria-labelledby="live-title">
-      <div className="wrap liveWrap">
-        <Reveal>
-          <p className="kicker lime">Live activity</p>
-          <h2 id="live-title" className="title" style={{ marginTop: 14 }}>Happening<br />right now.</h2>
-          <p className="lede" style={{ marginTop: 18, maxWidth: 420 }}>The latest moments across FYNQ. Anonymous by design: no names, emails or locations.</p>
+    <section id="activity" className="live2" aria-labelledby="live-title">
+      <div className="container liveGrid">
+        <Reveal className="liveHead">
+          <p className="label"><span className="liveDot beat" aria-hidden="true" />Activity</p>
+          <h2 id="live-title" className="sectionTitle">Live</h2>
+          <p className="lead">The latest moments inside FYNQ. Anonymous by design.</p>
         </Reveal>
         <Reveal>
-          {events.length ? (
-            <ul className="liveList" aria-live="polite">
-              {events.map((e) => (
-                <li className="liveItem" key={`${e.kind}-${e.at}-${e.count}`}>
-                  <i className={DOT[e.kind]} aria-hidden="true" />
+          {list.length ? (
+            <ul className="stream" aria-live="polite">
+              {list.map((e) => (
+                <li className={`streamItem ${TONE[e.kind]}`} key={`${e.kind}-${e.at}-${e.count}`}>
+                  <i aria-hidden="true" />
                   <span className="what">{WHAT[e.kind](e.count)}</span>
-                  <time dateTime={e.at}>{ago(e.at, now)}</time>
+                  <time dateTime={e.at} className="tnum">{ago(e.at, now)}</time>
                 </li>
               ))}
             </ul>

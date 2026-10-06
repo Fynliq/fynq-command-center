@@ -132,20 +132,23 @@ export interface AttributionData {
 export interface StoryJourneyStage { id: string; label: string; count: number | null; unit: string; fromPrevious: number | null }
 
 /** One anonymous thing that happened: a kind, a time and a count. Never who, never where. */
-export interface LiveEvent { kind: 'visitor' | 'account' | 'files' | 'answer' | 'checkout' | 'payment'; at: string; count: number }
+export interface LiveEvent { kind: 'visitor' | 'account' | 'upload' | 'files' | 'answer' | 'paywall' | 'checkout' | 'payment'; at: string; count: number }
+
+export interface StorySignal { id: string; label: string; value: number | null; change: number | null; isNew: boolean }
 
 export interface StoryData {
-  pulse: {
-    headline: string;
-    tone: 'accelerating' | 'steady' | 'slowed' | 'started' | 'quiet' | null;
-    detail: string | null;
-    rule: string;
-    items: { id: string; label: string; value: number | null; format: 'count' | 'usd'; suffix: string }[];
-  };
+  velocity: { current: number | null; previous: number | null; state: 'accelerating' | 'stable' | 'slowing' | null; rule: string };
+  pulse: { state: 'accelerating' | 'growing' | 'steady' | 'cooling' | null; label: string; signals: StorySignal[]; customers: number | null; rule: string };
   journey: StoryJourneyStage[];
-  milestones: { id: string; label: string; current: number | null; target: number; pct: number | null; done: boolean }[];
+  paymentFunnel: { stages: StoryJourneyStage[]; biggestDrop: { from: string; to: string; lost: number; pct: number } | null };
+  /** One point per Chicago day: revenue that day, running total, and customers so far. Live money only. */
+  revenueSeries: { key: string; label: string; revenue: number; cumulative: number; customers: number }[];
+  todayExtra: { reads: number | null; readsYesterday: number | null };
+  retention: { returning: number | null; returningPct: number | null; wau: number | null; dau: number | null; mau: number | null; avgLogins: number | null; cohortsAvailable: boolean };
+  engagement: { questions: number | null; answered: number | null; analyses: number | null; logins7d: number | null; filesPerUploader: number | null };
+  milestones: { id: string; metric: 'trackedUsers' | 'accounts' | 'paidCustomers'; label: string; current: number | null; target: number; pct: number | null; done: boolean; completedAt: string | null }[];
   target: {
-    goal: number; current: number | null; deadline: string; daysLeft: number; pct: number | null;
+    goal: number; current: number | null; remaining: number | null; deadline: string; daysLeft: number; pct: number | null;
     requiredPerDay: number | null; pace7dPerDay: number | null; gapPerDay: number | null;
   };
   live: LiveEvent[];
