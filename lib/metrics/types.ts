@@ -129,6 +129,32 @@ export interface AttributionData {
   recent: ConversionTrail[];
 }
 
+export interface StoryJourneyStage { id: string; label: string; count: number | null; unit: string; fromPrevious: number | null }
+
+/** One anonymous thing that happened: a kind, a time and a count. Never who, never where. */
+export interface LiveEvent { kind: 'visitor' | 'account' | 'files' | 'answer' | 'checkout' | 'payment'; at: string; count: number }
+
+export interface StoryData {
+  pulse: {
+    headline: string;
+    tone: 'accelerating' | 'steady' | 'slowed' | 'started' | 'quiet' | null;
+    detail: string | null;
+    rule: string;
+    items: { id: string; label: string; value: number | null; format: 'count' | 'usd'; suffix: string }[];
+  };
+  journey: StoryJourneyStage[];
+  milestones: { id: string; label: string; current: number | null; target: number; pct: number | null; done: boolean }[];
+  target: {
+    goal: number; current: number | null; deadline: string; daysLeft: number; pct: number | null;
+    requiredPerDay: number | null; pace7dPerDay: number | null; gapPerDay: number | null;
+  };
+  live: LiveEvent[];
+  moment: { total: number | null; today: number | null; week: number | null; month: number | null };
+  /** Paying customers / accounts that saw the paywall, in percent. */
+  paywallConversion: number | null;
+  revenue: number | null;
+}
+
 export interface DashboardData {
   generatedAt: string;
   timezone: string;
@@ -156,6 +182,7 @@ export interface DashboardData {
   performance: RateMetric[];
   activity: ActivityBlock[];
   attribution: AttributionData;
+  story: StoryData;
   /** Which sources failed, by friendly name. Never error details. */
   unavailable: string[];
 }

@@ -9,6 +9,7 @@
 
 import { FUNNEL, METRICS, SOURCE_NAMES, type MetricId } from './definitions';
 import { computeAttribution } from './attribution';
+import { buildStory } from './story';
 import { DAY, HOUR, addDays, dayKey, dayLabel, daysBetween, hourLabel, inWindow, toMs, windows, type Window, type WindowPair } from './time';
 import type {
   ActivityBlock, Comparison, DashboardData, FunnelStage, GrowthSeries, Metric, MetricFormat, RateMetric, RawData, SourceKey,
@@ -385,7 +386,7 @@ export function computeDashboard(raw: RawData, now: number): DashboardData {
     revenue: okMoney ? revenueAll : null,
   });
 
-  return {
+  const dashboard: Omit<DashboardData, 'story'> = {
     generatedAt: new Date(now).toISOString(),
     timezone: 'America/Chicago',
     summary,
@@ -404,6 +405,7 @@ export function computeDashboard(raw: RawData, now: number): DashboardData {
     attribution: computeAttribution(raw, ok),
     unavailable: [...new Set(raw.failed)].map((s) => SOURCE_NAMES[s]),
   };
+  return { ...dashboard, story: buildStory(raw, dashboard, now) };
 }
 
 // ------------------------------------------------------------ activity
