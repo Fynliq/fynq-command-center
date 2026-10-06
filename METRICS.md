@@ -163,6 +163,24 @@ How a visit is classified (in the app, `server/attribution.js`), in priority ord
 
 Stripe TEST-mode checkouts and payments, test accounts and `EXCLUDED_BILLING_EMAILS` accounts never count as conversions or revenue.
 
+## Story sections (the redesigned page)
+
+The page reads top to bottom as a story, but every number on it is one of the metrics above (same ids, same definitions, same exclusions). The pieces that are new are in `lib/metrics/story.ts`:
+
+| Section | What it shows |
+|---|---|
+| Phone showcase | Tracked users, new today, accounts, unique uploaders, paying customers, real revenue, and the last 30 days of cumulative tracked users. |
+| "… and counting." | Total tracked users; new tracked users today, in the last 7 days and in the last 30 days (rolling windows). |
+| FYNQ Pulse | A fixed rule, no AI: new tracked users in the last 7 days vs the 7 days before. More than 20% higher is "accelerating", more than 20% lower "has slowed", otherwise "steady" ("has started" when the previous week was zero). The sign-up line uses the same rule on new accounts. The four figures are today's new users, accounts, files uploaded and real revenue. |
+| Today at FYNQ | The eight Today metrics, compared with yesterday at the same time. |
+| From attention to revenue | Tracked users → accounts → unique uploaders → accounts that saw the paywall → accounts that clicked unlock → accounts that started checkout → paying customers. Each percentage is that step divided by the one before. The steps mix browsers, people and accounts, and say which. |
+| Revenue | Paying customers, revenue today / 7D / 30D / all time, checkout-created, checkout-completed and payment-confirmed events, and paywall conversion = paying customers ÷ accounts that saw the paywall. |
+| Live activity | The 12 latest anonymous events: new visitor (back-to-back visitors are grouped), account created, files submitted (with the file count), question answered, checkout started, payment received. Money events follow the real-money rule. No names, emails, ids or locations; FYNQ does not record location. |
+| What's next | Progress to 500 / 1,000 / 2,500 / 5,000 tracked users, 100 / 250 accounts and 25 / 100 paying customers. |
+| Road to 5,000 | A target, not a forecast. Days left until Dec 31 (Central Time). Pace needed = (5,000 − tracked users) ÷ days left. Current pace = new tracked users in the last 7 days ÷ 7. |
+| Investor View | Tracked users, MAU, accounts, unique uploaders, files processed (files in sessions that were read successfully), paying customers, revenue, new users in 7 and 30 days, the growth chart and the conversion journey. |
+| Every metric, in detail | Everything else from before the redesign, unchanged. |
+
 ## Activity feed
 
 The last 7 days in 3-hour blocks (Central Time), newest first. Each block counts:

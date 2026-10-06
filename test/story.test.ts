@@ -110,3 +110,8 @@ test('failed sources make story values null, never zero', () => {
   assert.equal(f.journey[0].count, null);
   assert.ok(!f.live.some((e) => e.kind === 'visitor'));
 });
+
+test('back-to-back visitors become one line', () => {
+  const only = computeDashboard(raw({ accounts: [], uploads: [], questions: [], checkouts: [], entitlements: [], monetization: [] }), NOW).story.live;
+  assert.deepEqual(only.map((e) => [e.kind, e.count]), [['visitor', 12]]);
+});

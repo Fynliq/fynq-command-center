@@ -25,20 +25,16 @@ export function LoginForm() {
 
   return (
     <main className="loginWrap">
-      <form className="card loginCard glow" onSubmit={submit}>
-        <div className="brand">
-          <img className="mark" src="/fynq-logo.png" alt="" width={44} height={44} />
-          <div className="brandText">
-            <div className="brandName">FYNQ <span>Command Center</span></div>
-            <div className="brandSub">Live company intelligence</div>
-          </div>
-        </div>
-        <h1>Sign in</h1>
-        <p className="sub">Internal dashboard. Founder and COO access only.</p>
-        <label htmlFor="password" className="srOnly" style={{ position: 'absolute', left: -9999 }}>Password</label>
-        <input id="password" className="input" type="password" autoComplete="current-password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} autoFocus />
+      <div className="grain" aria-hidden="true" />
+      <form className="loginCard" onSubmit={submit}>
+        <img className="loginLogo" src="/fynq-logo.png" alt="FYNQ" width={84} height={84} />
+        <p className="kicker" style={{ marginTop: 22 }}>FYNQ</p>
+        <h1 className="loginTitle">Command Center</h1>
+        <p className="lede" style={{ fontSize: 17, marginTop: 10 }}>Founder and COO access only.</p>
+        <label htmlFor="password" className="loginLabel">Password</label>
+        <input id="password" className="input" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} autoFocus />
         {error && <p className="err" role="alert">{error}</p>}
-        <button className="btn primary" type="submit" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
+        <button className="loginBtn" type="submit" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
       </form>
     </main>
   );

@@ -152,6 +152,13 @@ export function buildStory(raw: RawData, d: Omit<DashboardData, 'story'>, now: n
   if (!raw.failed.includes('checkouts')) for (const c of raw.checkouts) if (real(c)) push('checkout', toMs(c.created_at));
   if (!raw.failed.includes('entitlements')) for (const e of raw.entitlements) if (real(e) && e.status === 'active') push('payment', toMs(e.paid_at) ?? toMs(e.activated_at));
   events.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
+  // Back-to-back visitors read better as one line: "5 new visitors".
+  const feed: LiveEvent[] = [];
+  for (const e of events) {
+    const last = feed[feed.length - 1];
+    if (e.kind === 'visitor' && last?.kind === 'visitor') last.count += 1;
+    else feed.push({ ...e });
+  }
 
   // ---- revenue extras
   const paywallViewers = funnelOk ? stage('paywall') : null;
@@ -162,7 +169,7 @@ export function buildStory(raw: RawData, d: Omit<DashboardData, 'story'>, now: n
     journey,
     milestones,
     target,
-    live: events.slice(0, 14),
+    live: feed.slice(0, 12),
     moment: {
       total: tracked,
       today: todayUsers,

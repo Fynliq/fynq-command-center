@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { Dashboard } from '@/components/Dashboard';
+import { CommandCenter } from '@/components/CommandCenter';
 import { isSignedIn } from '@/lib/auth';
 import { getDashboard } from '@/lib/data';
 import { ConfigError } from '@/lib/env';
@@ -18,7 +18,7 @@ export default async function Home() {
 
   // The first paint already has live numbers; the page then refreshes itself every 60 seconds.
   const data = await getDashboard();
-  return <Dashboard initial={data} />;
+  return <CommandCenter initial={data} />;
 }
 
 function NotConfigured({ missing }: { missing: string[] }) {
