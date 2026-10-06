@@ -739,7 +739,11 @@ body { background: var(--background); color: var(--text-primary); font-feature-s
 /* ---------------------------------------------------------------- the device */
 .device2 { padding: clamp(96px, 12vw, 176px) 0; border-top: 1px solid var(--border); overflow: hidden; }
 .deviceGrid { display: grid; gap: var(--space-8); align-items: center; }
-@media (min-width: 1000px) { .deviceGrid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+@media (min-width: 1000px) {
+  .deviceGrid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+  /* Line the headline up with the phone's big number instead of centring it against the whole device. */
+  .deviceText { margin-top: clamp(120px, 17vh, 190px); }
+}
 /* The phone: a flagship-style device in CSS only. No photography, no third-party marks.
  * Proportions follow a modern 6.3" pro phone: ~0.48 aspect, ~2% bezels, deep corner radius. */
 .ipStage {
