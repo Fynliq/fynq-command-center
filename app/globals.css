@@ -67,6 +67,9 @@
   --series-1: #70a106; --series-2: #4c8bf5; --up: var(--positive); --down: var(--negative); --warn: var(--warning);
   --radius: var(--radius-lg); --ease: var(--ease-out); --sans: var(--font-sans); --mono: var(--font-mono);
 }
+/* Some hosts (e.g. an in-app preview) pad the root by the notch height even when the page
+ * already sits below their own header; the fixed navigation handles the top itself. */
+:root { padding-top: 0; padding-bottom: 0; }
 @media (min-width: 768px) { :root { --gutter: 40px; } }
 @media (min-width: 1600px) { :root { --gutter: 56px; } }
 
