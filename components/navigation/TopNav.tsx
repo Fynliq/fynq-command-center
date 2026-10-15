@@ -85,6 +85,7 @@ export function TopNav({ stale, refreshing, beat, onRefresh, view, onView, onPre
                 <div className="menuLinks">
                   {view === 'command' && LINKS.map((l) => <a key={l.href} href={l.href} role="menuitem" onClick={() => setOpen(false)}>{l.label}</a>)}
                 </div>
+                <a role="menuitem" href="/ai-ops" onClick={() => setOpen(false)}>AI Operations · setup</a>
                 <p className="menuLabel">View</p>
                 <button type="button" role="menuitemradio" aria-checked={view === 'command'} onClick={() => go('command')}>Command</button>
                 <button type="button" role="menuitemradio" aria-checked={view === 'ceo'} onClick={() => go('ceo')}>CEO View</button>
